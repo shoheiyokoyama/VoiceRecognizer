@@ -22,7 +22,7 @@ class ViewController: UIViewController {
     
     fileprivate let audioType = "m4a"
     
-    fileprivate let voiceFileNames: [String] = ["v1", "v2", "v3", "v4", "v5", "v2", "v3", "v4", "v5"]
+    fileprivate let voiceFileNames: [String] = ["v1", "v2", "v3", "v4", "v5"]
     
     fileprivate var result = ""
     
@@ -152,7 +152,24 @@ fileprivate extension ViewController {
         titileLabel.text = "Voice Recognizer"
         button.setTitle("Finish Recognizeing", for: .normal)
         button.isEnabled = true
+        print("======== Finish Recognizeing =========")
         print(result)
+        saveFile()
+    }
+    
+    func saveFile() {
+
+        let fileName = "recognize" + ".txt"
+
+        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
+        let filePath = documentsPath + "/" + fileName
+        
+        do {
+            try result.write(toFile: filePath, atomically: true, encoding: String.Encoding.utf16)
+            print("======== Success Write file =========")
+        } catch {
+            print("error")
+        }
     }
 }
 
