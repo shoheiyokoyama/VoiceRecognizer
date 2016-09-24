@@ -11,6 +11,9 @@ import Speech
 
 class ViewController: UIViewController {
 
+    @IBOutlet fileprivate weak var titileLabel: UILabel!
+    @IBOutlet fileprivate weak var button: UIButton!
+    
     fileprivate let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "ja-JP"))!
     
     fileprivate var recognitionRequest: SFSpeechURLRecognitionRequest?
@@ -19,7 +22,7 @@ class ViewController: UIViewController {
     
     fileprivate let audioType = "m4a"
     
-    fileprivate let voiceFileNames: [String] = ["v1", "v2", "v3", "v4", "v5"]
+    fileprivate let voiceFileNames: [String] = ["v1", "v2", "v3", "v4", "v5", "v2", "v3", "v4", "v5"]
     
     fileprivate var result = ""
     
@@ -29,6 +32,13 @@ class ViewController: UIViewController {
         didSet {
             longestContents = ""
         }
+    }
+    
+    // MARK: - Life Cycle Methods -
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        button.isEnabled = false
     }
     
     override public func viewDidAppear(_ animated: Bool) {
@@ -46,7 +56,7 @@ fileprivate extension ViewController {
     }
     
     func confirmAuthorization () {
-        SFSpeechRecognizer.requestAuthorization { authStatus in
+        SFSpeechRecognizer.requestAuthorization { [weak self] authStatus in
             /*
              The callback may not be called on the main thread. Add an
              operation to the main queue to update the record button's state.
@@ -54,6 +64,7 @@ fileprivate extension ViewController {
             OperationQueue.main.addOperation {
                 switch authStatus {
                 case .authorized:
+                    self?.button.isEnabled = true
                     print("speech recognition OK")
                     
                 case .denied:
@@ -71,10 +82,13 @@ fileprivate extension ViewController {
     
     @IBAction func tappedButton(_ sender: AnyObject) {
         try! startRecording()
+        button.isEnabled = false
     }
     
     func startRecording() throws {
         guard speechRecognizer.isAvailable else { return }
+        titileLabel.text = "Processing..."
+        button.setTitle("Processing...", for: .normal)
         recognize(index: 0)
     }
     
@@ -94,6 +108,7 @@ fileprivate extension ViewController {
             fatalError("Unable to created audioPath \(voiceFileNames[index])")
         }
         
+        titileLabel.text = "Processing " + voiceFileNames[index] + "." + audioType
         recognitionRequest = SFSpeechURLRecognitionRequest(url: URL(fileURLWithPath: audioPath))
         
         recognize { [weak self] in
@@ -109,12 +124,13 @@ fileprivate extension ViewController {
         // for SFSpeechRecognitionTaskDelegate
         // recognitionTask = speechRecognizer.recognitionTask(with: recognitionRequest, delegate: self)
         
-        // for failure Request
+        // for Success Request
         sleep(5)
         
         recognitionTask = speechRecognizer.recognitionTask(with: recognitionRequest) { [weak self] result, error in
             guard let me = self, let result = result, error == nil else {
                 print(error, self?.currentIndex)
+                self?.recognize(index: (self?.currentIndex)!)
                 return
             }
             
@@ -125,14 +141,17 @@ fileprivate extension ViewController {
             }
             
             if result.isFinal {
-                me.result.append(me.longestContents + "\n")
-                print(me.longestContents)
+                me.result.append("\(me.currentIndex): " + me.longestContents + "\n")
+                print("\(me.currentIndex): " + me.longestContents + "\n")
                 completion()
             }
         }
     }
     
     func complete() {
+        titileLabel.text = "Voice Recognizer"
+        button.setTitle("Finish Recognizeing", for: .normal)
+        button.isEnabled = true
         print(result)
     }
 }
