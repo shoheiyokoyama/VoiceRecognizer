@@ -2,7 +2,7 @@
 //  ViewController.swift
 //  VoiceRecognizer
 //
-//  Created by 横山祥平 on 2016/09/24.
+//  Created by Shohei Yokoyama on 2016/09/24.
 //  Copyright © 2016年 Shohei. All rights reserved.
 //
 
@@ -18,6 +18,18 @@ class ViewController: UIViewController {
     fileprivate var recognitionTask: SFSpeechRecognitionTask?
     
     fileprivate let audioType = "m4a"
+    
+    fileprivate let voiceFileNames: [String] = ["v1", "v2", "v3", "v4", "v5"]
+    
+    fileprivate var result = ""
+    
+    fileprivate var longestContents = ""
+    
+    fileprivate var currentIndex = 0 {
+        didSet {
+            longestContents = ""
+        }
+    }
     
     override public func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
@@ -62,30 +74,66 @@ fileprivate extension ViewController {
     }
     
     func startRecording() throws {
+        guard speechRecognizer.isAvailable else { return }
+        recognize(index: 0)
+    }
+    
+    func recognize(index: Int) {
+        if index + 1 > voiceFileNames.count {
+            complete()
+            return
+        }
         
         // Cancel the previous task if it's running.
         if let recognitionTask = recognitionTask {
             recognitionTask.cancel()
             self.recognitionTask = nil
         }
+
+        guard let audioPath = Bundle.main.path(forResource: voiceFileNames[index], ofType: audioType) else {
+            fatalError("Unable to created audioPath \(voiceFileNames[index])")
+        }
         
-        guard speechRecognizer.isAvailable else { return }
-        
-        let audioPath = Bundle.main.path(forResource: "voice", ofType: audioType)!
         recognitionRequest = SFSpeechURLRecognitionRequest(url: URL(fileURLWithPath: audioPath))
         
+        recognize { [weak self] in
+            guard let me = self else { return }
+            me.currentIndex = index + 1
+            me.recognize(index: me.currentIndex)
+        }
+    }
+    
+    func recognize(completion: @escaping () -> ()) {
         guard let recognitionRequest = recognitionRequest else { fatalError("Unable to created a SFSpeechAudioBufferRecognitionRequest object") }
         
         // for SFSpeechRecognitionTaskDelegate
         // recognitionTask = speechRecognizer.recognitionTask(with: recognitionRequest, delegate: self)
-        recognitionTask = speechRecognizer.recognitionTask(with: recognitionRequest) { result, error in
-            guard let result = result, error == nil else { return }
+        
+        // for failure Request
+        sleep(5)
+        
+        recognitionTask = speechRecognizer.recognitionTask(with: recognitionRequest) { [weak self] result, error in
+            guard let me = self, let result = result, error == nil else {
+                print(error, self?.currentIndex)
+                return
+            }
+            
+            let text = result.bestTranscription.formattedString
+            
+            if me.longestContents.characters.count <= text.characters.count {
+                me.longestContents = text
+            }
             
             if result.isFinal {
-                let text = result.bestTranscription.formattedString
-                print(text)
+                me.result.append(me.longestContents + "\n")
+                print(me.longestContents)
+                completion()
             }
         }
+    }
+    
+    func complete() {
+        print(result)
     }
 }
 
