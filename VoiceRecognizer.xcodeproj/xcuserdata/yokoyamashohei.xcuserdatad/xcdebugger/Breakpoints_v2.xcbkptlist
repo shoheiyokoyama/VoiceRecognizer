@@ -10,12 +10,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "VoiceRecognizer/VoiceRecognizer.swift"
-            timestampString = "498969372.58979"
+            timestampString = "498984939.568165"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "125"
-            endingLineNumber = "125"
-            landmarkName = "completeRecognizing()"
+            startingLineNumber = "82"
+            endingLineNumber = "82"
+            landmarkName = "recognize(ofIndex:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
